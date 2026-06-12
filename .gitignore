@@ -1,0 +1,14 @@
+# Editor and OS files
+.DS_Store
+*.swp
+*.iml
+.idea/
+
+# Flutter generated files
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub/
+/build/
+/coverage/
