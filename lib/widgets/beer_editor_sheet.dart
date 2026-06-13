@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:beer_tracker/models/beer_entry.dart';
 import 'package:beer_tracker/services/beer_repository.dart';
 import 'package:beer_tracker/widgets/beer_bottle_rating.dart';
+import 'package:beer_tracker/widgets/image_preview_dialog.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -19,7 +20,16 @@ class BeerEditorSheet extends StatefulWidget {
 
 class _BeerEditorSheetState extends State<BeerEditorSheet> {
   late final TextEditingController _titleController;
+  late final TextEditingController _breweryController;
+  late final TextEditingController _styleController;
+  late final TextEditingController _abvController;
+  late final TextEditingController _notesController;
+  late final TextEditingController _purchaseLocationController;
+  late final TextEditingController _pricePerUnitController;
+  late final TextEditingController _totalCostController;
   late BeerType _type;
+  late PurchaseLocationType _purchaseLocationType;
+  DateTime? _purchaseDate;
   XFile? _image;
   int _sweetnessRating = 5;
   int _bitternessRating = 6;
@@ -32,17 +42,33 @@ class _BeerEditorSheetState extends State<BeerEditorSheet> {
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.initial?.title ?? '');
+    _breweryController = TextEditingController(text: widget.initial?.brewery ?? '');
+    _styleController = TextEditingController(text: widget.initial?.style ?? '');
+    _abvController = TextEditingController(text: widget.initial?.abv?.toString() ?? '');
+    _notesController = TextEditingController(text: widget.initial?.notes ?? '');
+    _purchaseLocationController = TextEditingController(text: widget.initial?.purchaseLocation ?? '');
+    _pricePerUnitController = TextEditingController(text: widget.initial?.pricePerUnit?.toString() ?? '');
+    _totalCostController = TextEditingController(text: widget.initial?.totalCost?.toString() ?? '');
     _type = widget.initial?.type ?? BeerType.ale;
+    _purchaseLocationType = widget.initial?.purchaseLocationType ?? PurchaseLocationType.other;
     _sweetnessRating = widget.initial?.sweetnessRating ?? 5;
     _bitternessRating = widget.initial?.bitternessRating ?? 6;
     _bodyRating = widget.initial?.bodyRating ?? 6;
     _acidityRating = widget.initial?.acidityRating ?? 3;
     _overallRating = widget.initial?.overallRating ?? 7;
+    _purchaseDate = widget.initial?.purchaseDate;
   }
 
   @override
   void dispose() {
     _titleController.dispose();
+    _breweryController.dispose();
+    _styleController.dispose();
+    _abvController.dispose();
+    _notesController.dispose();
+    _purchaseLocationController.dispose();
+    _pricePerUnitController.dispose();
+    _totalCostController.dispose();
     super.dispose();
   }
 
@@ -74,6 +100,15 @@ class _BeerEditorSheetState extends State<BeerEditorSheet> {
         bodyRating: _bodyRating,
         acidityRating: _acidityRating,
         overallRating: _overallRating,
+        brewery: _breweryController.text,
+        style: _styleController.text,
+        abv: _parseDouble(_abvController.text),
+        notes: _notesController.text,
+        purchaseLocationType: _purchaseLocationType,
+        purchaseLocation: _purchaseLocationController.text,
+        purchaseDate: _purchaseDate,
+        pricePerUnit: _parseDouble(_pricePerUnitController.text),
+        totalCost: _parseDouble(_totalCostController.text),
         image: _image,
       ),
     );
@@ -128,6 +163,7 @@ class _BeerEditorSheetState extends State<BeerEditorSheet> {
                 _ImagePickerTile(
                   image: image,
                   onTap: _pickImage,
+                  onPreview: image == null ? null : () => showImagePreview(context, image.path, title: _titleController.text.isEmpty ? 'Beer photo' : _titleController.text),
                 ),
                 const SizedBox(height: 18),
                 TextField(
@@ -151,6 +187,89 @@ class _BeerEditorSheetState extends State<BeerEditorSheet> {
                       setState(() => _type = value);
                     }
                   },
+                ),
+                const SizedBox(height: 18),
+                _SectionCard(
+                  title: 'Beer details',
+                  children: [
+                    TextField(
+                      controller: _breweryController,
+                      textInputAction: TextInputAction.next,
+                      decoration: const InputDecoration(labelText: 'Brewery'),
+                    ),
+                    const SizedBox(height: 14),
+                    TextField(
+                      controller: _styleController,
+                      textInputAction: TextInputAction.next,
+                      decoration: const InputDecoration(labelText: 'Style'),
+                    ),
+                    const SizedBox(height: 14),
+                    TextField(
+                      controller: _abvController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(labelText: 'ABV', hintText: 'e.g. 6.5'),
+                    ),
+                    const SizedBox(height: 14),
+                    TextField(
+                      controller: _notesController,
+                      maxLines: 3,
+                      decoration: const InputDecoration(labelText: 'Notes', hintText: 'Tasting notes or anything you want to remember'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                _SectionCard(
+                  title: 'Purchase details',
+                  children: [
+                    DropdownButtonFormField<PurchaseLocationType>(
+                      initialValue: _purchaseLocationType,
+                      decoration: const InputDecoration(labelText: 'Purchase type'),
+                      items: PurchaseLocationType.values
+                          .map((type) => DropdownMenuItem(value: type, child: Text(type.label)))
+                          .toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() => _purchaseLocationType = value);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 14),
+                    TextField(
+                      controller: _purchaseLocationController,
+                      textInputAction: TextInputAction.next,
+                      decoration: const InputDecoration(labelText: 'Purchase location', hintText: 'Store or venue name'),
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _pricePerUnitController,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            decoration: const InputDecoration(labelText: 'Price per unit', hintText: 'e.g. 2.50'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextField(
+                            controller: _totalCostController,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            decoration: const InputDecoration(labelText: 'Total cost', hintText: 'e.g. 12.99'),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    OutlinedButton.icon(
+                      onPressed: _pickPurchaseDate,
+                      icon: const Icon(Icons.event_rounded),
+                      label: Text(_purchaseDate == null ? 'Set purchase date' : 'Purchase date: ${MaterialLocalizations.of(context).formatMediumDate(_purchaseDate!)}'),
+                    ),
+                    if (_purchaseDate != null) ...[
+                      const SizedBox(height: 8),
+                      TextButton(onPressed: () => setState(() => _purchaseDate = null), child: const Text('Clear date')),
+                    ],
+                  ],
                 ),
                 const SizedBox(height: 18),
                 _GuideTile(
@@ -190,6 +309,26 @@ class _BeerEditorSheetState extends State<BeerEditorSheet> {
         ),
       ),
     );
+  }
+
+  double? _parseDouble(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      return null;
+    }
+    return double.tryParse(trimmed);
+  }
+
+  Future<void> _pickPurchaseDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _purchaseDate ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+    );
+    if (picked != null) {
+      setState(() => _purchaseDate = picked);
+    }
   }
 }
 
@@ -255,11 +394,39 @@ class _GuideTile extends StatelessWidget {
   }
 }
 
+class _SectionCard extends StatelessWidget {
+  const _SectionCard({required this.title, required this.children});
+
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.38),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+          const SizedBox(height: 14),
+          ...children,
+        ],
+      ),
+    );
+  }
+}
+
 class _ImagePickerTile extends StatelessWidget {
-  const _ImagePickerTile({required this.image, required this.onTap});
+  const _ImagePickerTile({required this.image, required this.onTap, this.onPreview});
 
   final XFile? image;
   final VoidCallback onTap;
+  final VoidCallback? onPreview;
 
   @override
   Widget build(BuildContext context) {
@@ -300,11 +467,11 @@ class _ImagePickerTile extends StatelessWidget {
                     ],
                   ),
                 )
-              : Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Image.file(File(image!.path), fit: BoxFit.cover),
-                    DecoratedBox(
+                : Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.file(File(image!.path), fit: BoxFit.cover),
+                      DecoratedBox(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
@@ -313,10 +480,19 @@ class _ImagePickerTile extends StatelessWidget {
                         ),
                       ),
                     ),
-                    Positioned(
-                      left: 18,
-                      right: 18,
-                      bottom: 18,
+                      Positioned(
+                        top: 12,
+                        right: 12,
+                        child: IconButton.filledTonal(
+                          tooltip: 'Preview image',
+                          onPressed: onPreview,
+                          icon: const Icon(Icons.zoom_out_map_rounded),
+                        ),
+                      ),
+                      Positioned(
+                        left: 18,
+                        right: 18,
+                        bottom: 18,
                       child: Row(
                         children: [
                           Expanded(

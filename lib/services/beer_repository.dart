@@ -56,6 +56,17 @@ class BeerRepository extends ChangeNotifier {
       bodyRating: draft.bodyRating,
       acidityRating: draft.acidityRating,
       overallRating: draft.overallRating,
+      brewery: draft.brewery.trim(),
+      style: draft.style.trim(),
+      abv: draft.abv,
+      notes: draft.notes.trim(),
+      purchaseLocationType: draft.purchaseLocationType,
+      purchaseLocation: draft.purchaseLocation.trim(),
+      purchaseDate: draft.purchaseDate,
+      pricePerUnit: draft.pricePerUnit,
+      totalCost: draft.totalCost,
+      favorite: existing?.favorite ?? false,
+      drinkHistory: existing?.drinkHistory ?? <DateTime>[],
       createdAt: existing?.createdAt ?? DateTime.now(),
     );
 
@@ -69,10 +80,87 @@ class BeerRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> replaceBeer(BeerEntry entry) async {
+    _entries.removeWhere((item) => item.id == entry.id);
+    _entries.add(entry);
+    _entries.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    await _persist();
+    notifyListeners();
+  }
+
+  Future<void> toggleFavorite(String id) async {
+    final index = _entries.indexWhere((item) => item.id == id);
+    if (index == -1) {
+      return;
+    }
+    final updated = _entries[index].copyWith(favorite: !_entries[index].favorite);
+    _entries[index] = updated;
+    await _persist();
+    notifyListeners();
+  }
+
+  Future<void> recordDrink(String id, {DateTime? when}) async {
+    final index = _entries.indexWhere((item) => item.id == id);
+    if (index == -1) {
+      return;
+    }
+    final updated = _entries[index].copyWith(
+      drinkHistory: [..._entries[index].drinkHistory, when ?? DateTime.now()]..sort(),
+    );
+    _entries[index] = updated;
+    await _persist();
+    notifyListeners();
+  }
+
+  Future<void> removeDrink(String id, DateTime when) async {
+    final index = _entries.indexWhere((item) => item.id == id);
+    if (index == -1) {
+      return;
+    }
+    final updated = _entries[index].copyWith(
+      drinkHistory: _entries[index].drinkHistory.where((item) => item != when).toList(),
+    );
+    _entries[index] = updated;
+    await _persist();
+    notifyListeners();
+  }
+
   Future<void> deleteBeer(String id) async {
     _entries.removeWhere((item) => item.id == id);
     await _persist();
     notifyListeners();
+  }
+
+  Future<void> exportBackup(String path) async {
+    final backup = {
+      'version': 1,
+      'exportedAt': DateTime.now().toIso8601String(),
+      'beers': _entries.map((item) => item.toJson()).toList(),
+    };
+    await File(path).writeAsString(jsonEncode(backup));
+  }
+
+  Future<int> importBackup(String path) async {
+    final raw = await File(path).readAsString();
+    final decoded = jsonDecode(raw);
+
+    final List<dynamic> beersJson = decoded is Map<String, dynamic>
+        ? (decoded['beers'] as List<dynamic>? ?? const [])
+        : decoded is List<dynamic>
+            ? decoded
+            : const [];
+
+    final imported = beersJson
+        .map((item) => BeerEntry.fromJson(item as Map<String, dynamic>))
+        .toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+    _entries
+      ..clear()
+      ..addAll(imported);
+    await _persist();
+    notifyListeners();
+    return imported.length;
   }
 
   Future<String?> _importImage(XFile file) async {
@@ -117,6 +205,15 @@ class BeerDraft {
     required this.bodyRating,
     required this.acidityRating,
     required this.overallRating,
+    required this.brewery,
+    required this.style,
+    required this.abv,
+    required this.notes,
+    required this.purchaseLocationType,
+    required this.purchaseLocation,
+    required this.purchaseDate,
+    required this.pricePerUnit,
+    required this.totalCost,
     this.image,
   });
 
@@ -127,5 +224,14 @@ class BeerDraft {
   final int bodyRating;
   final int acidityRating;
   final int overallRating;
+  final String brewery;
+  final String style;
+  final double? abv;
+  final String notes;
+  final PurchaseLocationType purchaseLocationType;
+  final String purchaseLocation;
+  final DateTime? purchaseDate;
+  final double? pricePerUnit;
+  final double? totalCost;
   final XFile? image;
 }

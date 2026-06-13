@@ -1,13 +1,17 @@
 # PintDex
 
-Beer tracking app for Linux and Android.
+Local-only beer tracking app for Linux and Android.
 
 ## What it does
 
 - Add beers with a label photo
 - Rate them on a 10-point scale
 - Track sweetness, bitterness, body, acidity, and overall
-- Sort and filter your list
+- Log drinks, favorites, and drink history
+- Sort, search, and filter your list
+- Use list or grid views
+- View stats and export or import backups
+- Switch between theme presets
 - Store everything locally on your device
 
 ## How to run
