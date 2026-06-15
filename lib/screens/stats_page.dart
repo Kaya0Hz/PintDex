@@ -16,6 +16,7 @@ class StatsPage extends StatelessWidget {
         final totalDrinks = beers.fold<int>(0, (sum, beer) => sum + beer.timesDrunk);
         final favorites = beers.where((beer) => beer.favorite).length;
         final avgRating = beers.isEmpty ? 0.0 : beers.map((beer) => beer.overallRating).reduce((a, b) => a + b) / beers.length;
+        final ratingBuckets = _ratingBuckets(beers);
         final mostDrunk = [...beers]..sort((a, b) => b.timesDrunk.compareTo(a.timesDrunk));
         final latestDrink = _latestDrink(beers);
         final breweryCount = beers.where((beer) => beer.brewery.trim().isNotEmpty).map((beer) => beer.brewery.trim()).toSet().length;
@@ -26,14 +27,12 @@ class StatsPage extends StatelessWidget {
           body: ListView(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
             children: [
-              _SummaryCard(
-                title: 'Overview',
-                children: [
-                  _StatRow(label: 'Beers logged', value: beers.length.toString()),
-                  _StatRow(label: 'Drinks logged', value: totalDrinks.toString()),
-                  _StatRow(label: 'Favorites', value: favorites.toString()),
-                  _StatRow(label: 'Average rating', value: beers.isEmpty ? '0.0' : avgRating.toStringAsFixed(1)),
-                ],
+              _AtAGlanceCard(
+                beers: beers,
+                drinks: totalDrinks,
+                favorites: favorites,
+                avgRating: avgRating,
+                ratingBuckets: ratingBuckets,
               ),
               const SizedBox(height: 18),
               _SummaryCard(
@@ -68,6 +67,155 @@ class StatsPage extends StatelessWidget {
   DateTime? _latestDrink(List<BeerEntry> beers) {
     final drinks = beers.expand((beer) => beer.drinkHistory).toList()..sort();
     return drinks.isEmpty ? null : drinks.last;
+  }
+
+  List<int> _ratingBuckets(List<BeerEntry> beers) {
+    final buckets = List<int>.filled(4, 0);
+    for (final beer in beers) {
+      final value = beer.overallRating;
+      if (value <= 3) {
+        buckets[0] += 1;
+      } else if (value <= 6) {
+        buckets[1] += 1;
+      } else if (value <= 8) {
+        buckets[2] += 1;
+      } else {
+        buckets[3] += 1;
+      }
+    }
+    return buckets;
+  }
+}
+
+class _AtAGlanceCard extends StatelessWidget {
+  const _AtAGlanceCard({
+    required this.beers,
+    required this.drinks,
+    required this.favorites,
+    required this.avgRating,
+    required this.ratingBuckets,
+  });
+
+  final List<BeerEntry> beers;
+  final int drinks;
+  final int favorites;
+  final double avgRating;
+  final List<int> ratingBuckets;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final totalRatings = ratingBuckets.fold<int>(0, (sum, value) => sum + value);
+    final bucketLabels = ['Low', 'Mid', 'Good', 'Great'];
+    final bucketColors = [scheme.error, scheme.tertiaryContainer, scheme.primary, scheme.tertiary];
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.38),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('At a glance', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _MiniStat(label: 'Beers', value: beers.length.toString()),
+              _MiniStat(label: 'Drinks', value: drinks.toString()),
+              _MiniStat(label: 'Favorites', value: favorites.toString()),
+              _MiniStat(label: 'Avg', value: beers.isEmpty ? '0.0' : avgRating.toStringAsFixed(1)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: SizedBox(
+              height: 12,
+              child: Row(
+                children: [
+                  for (var i = 0; i < ratingBuckets.length; i++)
+                    Expanded(
+                      flex: ratingBuckets[i] == 0 ? 1 : ratingBuckets[i],
+                      child: Container(color: totalRatings == 0 ? scheme.surfaceContainerHighest : bucketColors[i]),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 10,
+            runSpacing: 8,
+            children: [
+              for (var i = 0; i < bucketLabels.length; i++)
+                _LegendChip(
+                  label: bucketLabels[i],
+                  value: ratingBuckets[i].toString(),
+                  color: bucketColors[i],
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MiniStat extends StatelessWidget {
+  const _MiniStat({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: scheme.surface.withValues(alpha: 0.26),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(value, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+          const SizedBox(height: 4),
+          Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant)),
+        ],
+      ),
+    );
+  }
+}
+
+class _LegendChip extends StatelessWidget {
+  const _LegendChip({required this.label, required this.value, required this.color});
+
+  final String label;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+          const SizedBox(width: 8),
+          Text('$label $value'),
+        ],
+      ),
+    );
   }
 }
 

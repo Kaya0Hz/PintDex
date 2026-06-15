@@ -17,6 +17,7 @@ class BeerDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isPhoneLayout = MediaQuery.sizeOf(context).width < 700;
     return AnimatedBuilder(
       animation: Listenable.merge([repository, settings]),
       builder: (context, _) {
@@ -33,19 +34,19 @@ class BeerDetailPage extends StatelessWidget {
         final recentDrinks = beer.drinkHistory.reversed.take(5).toList();
         final olderDrinks = beer.drinkHistory.reversed.skip(5).toList();
 
-        return Scaffold(
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: () => _recordDrink(context, beer),
-            icon: const Icon(Icons.local_drink_rounded),
-            label: const Text('Drink again'),
-          ),
-          body: CustomScrollView(
-            slivers: [
-              SliverAppBar(
-                expandedHeight: 340,
-                pinned: true,
-                stretch: true,
-                backgroundColor: scheme.surface,
+          return Scaffold(
+            floatingActionButton: FloatingActionButton.extended(
+              onPressed: () => _recordDrink(context, beer),
+              icon: const Icon(Icons.local_drink_rounded),
+              label: const Text('Drink again'),
+            ),
+            body: CustomScrollView(
+              slivers: [
+                SliverAppBar(
+                  expandedHeight: isPhoneLayout ? 250 : 340,
+                  pinned: true,
+                  stretch: true,
+                  backgroundColor: scheme.surface,
                 actions: [
                   if (image != null)
                     IconButton(
@@ -70,7 +71,7 @@ class BeerDetailPage extends StatelessWidget {
                   ),
                 ],
                 flexibleSpace: FlexibleSpaceBar(
-                  title: Text(beer.title),
+                  title: Text(beer.title, maxLines: 1, overflow: TextOverflow.ellipsis),
                   background: image == null
                       ? Container(
                           decoration: BoxDecoration(
@@ -101,68 +102,68 @@ class BeerDetailPage extends StatelessWidget {
                           ),
                         ),
                 ),
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 96),
+                ),
+                SliverPadding(
+                padding: EdgeInsets.fromLTRB(isPhoneLayout ? 14 : 20, isPhoneLayout ? 14 : 20, isPhoneLayout ? 14 : 20, 96),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate(
                     [
-                      _OverviewCard(beer: beer),
-                      const SizedBox(height: 18),
+                      _OverviewCard(beer: beer, compact: isPhoneLayout),
+                      SizedBox(height: isPhoneLayout ? 14 : 18),
                       _SectionTitle('Ratings'),
                       const SizedBox(height: 12),
-                      _DetailRow(label: 'Sweetness', value: beer.sweetnessRating),
-                      const SizedBox(height: 12),
-                      _DetailRow(label: 'Bitterness', value: beer.bitternessRating),
-                      const SizedBox(height: 12),
-                      _DetailRow(label: 'Body', value: beer.bodyRating),
-                      const SizedBox(height: 12),
-                      _DetailRow(label: 'Acidity', value: beer.acidityRating),
-                      const SizedBox(height: 12),
-                      _DetailRow(label: 'Overall', value: beer.overallRating),
-                       _InfoCard(title: 'Notes', value: beer.notes),
-                       _InfoCard(title: 'Brewery', value: beer.brewery),
-                       const SizedBox(height: 12),
-                       _InfoCard(title: 'Purchase location', value: beer.purchaseLocation),
-                       const SizedBox(height: 12),
-                       _InfoCard(title: 'Purchase type', value: beer.purchaseLocationType.label),
-                       const SizedBox(height: 12),
-                       _InfoCard(title: 'Price per unit', value: _money(beer.pricePerUnit)),
-                       if (settings.showAdvancedBeerInfo) ...[
-                         const SizedBox(height: 18),
-                         _SectionTitle('Beer details'),
+                      _DetailRow(label: 'Sweetness', value: beer.sweetnessRating, compact: isPhoneLayout),
+                      SizedBox(height: isPhoneLayout ? 10 : 12),
+                      _DetailRow(label: 'Bitterness', value: beer.bitternessRating, compact: isPhoneLayout),
+                      SizedBox(height: isPhoneLayout ? 10 : 12),
+                      _DetailRow(label: 'Body', value: beer.bodyRating, compact: isPhoneLayout),
+                      SizedBox(height: isPhoneLayout ? 10 : 12),
+                      _DetailRow(label: 'Acidity', value: beer.acidityRating, compact: isPhoneLayout),
+                      SizedBox(height: isPhoneLayout ? 10 : 12),
+                      _DetailRow(label: 'Overall', value: beer.overallRating, compact: isPhoneLayout),
+                        _InfoCard(title: 'Notes', value: beer.notes, compact: isPhoneLayout),
+                        _InfoCard(title: 'Brewery', value: beer.brewery, compact: isPhoneLayout),
+                        SizedBox(height: isPhoneLayout ? 10 : 12),
+                        _InfoCard(title: 'Purchase location', value: beer.purchaseLocation, compact: isPhoneLayout),
+                        SizedBox(height: isPhoneLayout ? 10 : 12),
+                        _InfoCard(title: 'Purchase type', value: beer.purchaseLocationType.label, compact: isPhoneLayout),
+                        SizedBox(height: isPhoneLayout ? 10 : 12),
+                        _InfoCard(title: 'Price per unit', value: _money(beer.pricePerUnit), compact: isPhoneLayout),
+                        if (settings.showAdvancedBeerInfo) ...[
+                          SizedBox(height: isPhoneLayout ? 14 : 18),
+                          _SectionTitle('Beer details'),
+                          const SizedBox(height: 12),
+                          _InfoCard(title: 'Style', value: beer.style, compact: isPhoneLayout),
+                          SizedBox(height: isPhoneLayout ? 10 : 12),
+                          _InfoCard(title: 'ABV', value: beer.abv == null ? '' : '${beer.abv!.toStringAsFixed(1)}%', compact: isPhoneLayout),
+                        ],
+                       if (settings.showPurchaseDetails) ...[
+                         SizedBox(height: isPhoneLayout ? 14 : 18),
+                         _SectionTitle('Purchase details'),
                          const SizedBox(height: 12),
-                         _InfoCard(title: 'Style', value: beer.style),
-                         const SizedBox(height: 12),
-                         _InfoCard(title: 'ABV', value: beer.abv == null ? '' : '${beer.abv!.toStringAsFixed(1)}%'),
-                       ],
-                      if (settings.showPurchaseDetails) ...[
-                        const SizedBox(height: 18),
-                        _SectionTitle('Purchase details'),
-                        const SizedBox(height: 12),
-                        ExpansionTile(
+                         ExpansionTile(
                           tilePadding: EdgeInsets.zero,
                           childrenPadding: const EdgeInsets.only(bottom: 8),
                           title: const Text('More purchase details'),
                           subtitle: Text(beer.purchaseDate == null ? 'No purchase date saved' : _formatDate(context, beer.purchaseDate)),
                           children: [
-                            _InfoCard(title: 'Total cost', value: _money(beer.totalCost)),
-                            const SizedBox(height: 12),
-                            _InfoCard(title: 'Purchase date', value: _formatDate(context, beer.purchaseDate)),
+                             _InfoCard(title: 'Total cost', value: _money(beer.totalCost), compact: isPhoneLayout),
+                             const SizedBox(height: 12),
+                             _InfoCard(title: 'Purchase date', value: _formatDate(context, beer.purchaseDate), compact: isPhoneLayout),
                           ],
                         ),
                       ],
                       if (settings.showDrinkHistory) ...[
-                        const SizedBox(height: 18),
-                        _SectionTitle('Drink history'),
-                      ],
-                      const SizedBox(height: 12),
-                      _InfoCard(title: 'Times drunk', value: beer.timesDrunk.toString()),
-                      const SizedBox(height: 12),
-                      _InfoCard(title: 'Last drank', value: beer.lastDrank == null ? 'Not set' : _formatDateTime(context, beer.lastDrank!)),
-                      if (settings.showDrinkHistory) ...[
-                        const SizedBox(height: 12),
-                        if (beer.drinkHistory.isEmpty)
+                         SizedBox(height: isPhoneLayout ? 14 : 18),
+                         _SectionTitle('Drink history'),
+                       ],
+                       SizedBox(height: isPhoneLayout ? 10 : 12),
+                       _InfoCard(title: 'Times drunk', value: beer.timesDrunk.toString(), compact: isPhoneLayout),
+                       SizedBox(height: isPhoneLayout ? 10 : 12),
+                       _InfoCard(title: 'Last drank', value: beer.lastDrank == null ? 'Not set' : _formatDateTime(context, beer.lastDrank!), compact: isPhoneLayout),
+                       if (settings.showDrinkHistory) ...[
+                         SizedBox(height: isPhoneLayout ? 10 : 12),
+                         if (beer.drinkHistory.isEmpty)
                           const _EmptyHistoryCard()
                         else ...[
                           Column(
@@ -234,15 +235,16 @@ class BeerDetailPage extends StatelessWidget {
 }
 
 class _OverviewCard extends StatelessWidget {
-  const _OverviewCard({required this.beer});
+  const _OverviewCard({required this.beer, required this.compact});
 
   final BeerEntry beer;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: EdgeInsets.all(compact ? 14 : 18),
       decoration: BoxDecoration(
         gradient: LinearGradient(colors: [scheme.primaryContainer, scheme.secondaryContainer]),
         borderRadius: BorderRadius.circular(24),
@@ -255,24 +257,27 @@ class _OverviewCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   beer.title,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
+                  maxLines: compact ? 2 : 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: (compact ? Theme.of(context).textTheme.titleLarge : Theme.of(context).textTheme.headlineSmall)
+                      ?.copyWith(fontWeight: FontWeight.w900),
                 ),
               ),
               if (beer.favorite) const Icon(Icons.favorite_rounded),
             ],
           ),
           const SizedBox(height: 10),
-          Text(beer.type.label, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+          Text(beer.type.label, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, fontSize: compact ? 15 : null)),
           const SizedBox(height: 12),
-          BeerBottleRating(value: beer.overallRating, onChanged: (_) {}, size: 26, spacing: 6),
+          BeerBottleRating(value: beer.overallRating, onChanged: (_) {}, size: compact ? 22 : 26, spacing: compact ? 4 : 6),
           const SizedBox(height: 12),
           Wrap(
             spacing: 10,
             runSpacing: 10,
             children: [
-              _Pill(label: '${beer.timesDrunk} drinks'),
-              _Pill(label: beer.lastDrank == null ? 'Never drank' : 'Last drank ${_formatDateTime(context, beer.lastDrank!)}'),
-               if (beer.purchaseLocation.isNotEmpty) _Pill(label: beer.purchaseLocation),
+               _Pill(label: '${beer.timesDrunk} drinks', compact: compact),
+               _Pill(label: beer.lastDrank == null ? 'Never drank' : 'Last drank ${_formatDateTime(context, beer.lastDrank!)}', compact: compact),
+                if (beer.purchaseLocation.isNotEmpty) _Pill(label: beer.purchaseLocation, compact: compact),
             ],
           ),
         ],
@@ -293,16 +298,17 @@ class _SectionTitle extends StatelessWidget {
 }
 
 class _DetailRow extends StatelessWidget {
-  const _DetailRow({required this.label, required this.value});
+  const _DetailRow({required this.label, required this.value, this.compact = false});
 
   final String label;
   final int value;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(compact ? 12 : 16),
       decoration: BoxDecoration(
         color: scheme.surfaceContainerHighest.withValues(alpha: 0.55),
         borderRadius: BorderRadius.circular(22),
@@ -310,9 +316,9 @@ class _DetailRow extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Text(label, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+            child: Text(label, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, fontSize: compact ? 14 : null)),
           ),
-          BeerBottleRating(value: value, onChanged: (_) {}, size: 26, spacing: 6),
+          BeerBottleRating(value: value, onChanged: (_) {}, size: compact ? 22 : 26, spacing: compact ? 4 : 6),
         ],
       ),
     );
@@ -320,17 +326,18 @@ class _DetailRow extends StatelessWidget {
 }
 
 class _InfoCard extends StatelessWidget {
-  const _InfoCard({required this.title, required this.value});
+  const _InfoCard({required this.title, required this.value, this.compact = false});
 
   final String title;
   final String value;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(compact ? 12 : 16),
       decoration: BoxDecoration(
         color: scheme.surfaceContainerHighest.withValues(alpha: 0.44),
         borderRadius: BorderRadius.circular(20),
@@ -338,9 +345,9 @@ class _InfoCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800)),
+          Text(title, style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800, fontSize: compact ? 12 : null)),
           const SizedBox(height: 6),
-          Text(value.isEmpty ? 'Not set' : value),
+          Text(value.isEmpty ? 'Not set' : value, maxLines: compact ? 2 : null, overflow: TextOverflow.ellipsis),
         ],
       ),
     );
@@ -393,20 +400,21 @@ class _EmptyHistoryCard extends StatelessWidget {
 }
 
 class _Pill extends StatelessWidget {
-  const _Pill({required this.label});
+  const _Pill({required this.label, this.compact = false});
 
   final String label;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: EdgeInsets.symmetric(horizontal: compact ? 10 : 12, vertical: compact ? 6 : 8),
       decoration: BoxDecoration(
         color: scheme.surface.withValues(alpha: 0.24),
         borderRadius: BorderRadius.circular(999),
       ),
-      child: Text(label),
+      child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
     );
   }
 }

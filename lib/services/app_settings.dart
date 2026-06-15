@@ -58,6 +58,7 @@ class AppSettings extends ChangeNotifier {
   bool showDrinkHistory = true;
   bool confirmDrinkAgain = false;
   bool showFavoritesOnlyOnHome = false;
+  bool showHomeTips = true;
   int heroSloganIndex = 0;
   String? lastSeenAppVersion;
 
@@ -78,6 +79,7 @@ class AppSettings extends ChangeNotifier {
     showDrinkHistory = decoded['showDrinkHistory'] as bool? ?? true;
     confirmDrinkAgain = decoded['confirmDrinkAgain'] as bool? ?? false;
     showFavoritesOnlyOnHome = decoded['showFavoritesOnlyOnHome'] as bool? ?? false;
+    showHomeTips = decoded['showHomeTips'] as bool? ?? true;
     heroSloganIndex = decoded['heroSloganIndex'] as int? ?? 0;
     lastSeenAppVersion = decoded['lastSeenAppVersion'] as String?;
     notifyListeners();
@@ -125,6 +127,13 @@ class AppSettings extends ChangeNotifier {
     await _persist();
   }
 
+  Future<void> setShowHomeTips(bool value) async {
+    if (showHomeTips == value) return;
+    showHomeTips = value;
+    notifyListeners();
+    await _persist();
+  }
+
   Future<void> bumpHeroSloganIndex() async {
     heroSloganIndex += 1;
     notifyListeners();
@@ -145,6 +154,7 @@ class AppSettings extends ChangeNotifier {
         'showDrinkHistory': showDrinkHistory,
         'confirmDrinkAgain': confirmDrinkAgain,
         'showFavoritesOnlyOnHome': showFavoritesOnlyOnHome,
+        'showHomeTips': showHomeTips,
         'heroSloganIndex': heroSloganIndex,
         'lastSeenAppVersion': lastSeenAppVersion,
       };

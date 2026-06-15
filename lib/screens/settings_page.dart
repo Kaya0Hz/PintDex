@@ -81,6 +81,18 @@ class SettingsPage extends StatelessWidget {
               ),
               const SizedBox(height: 18),
               _SectionCard(
+                title: 'Home tips',
+                subtitle: 'Show or hide the quick usage hints on the home screen.',
+                child: SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Show profile tips'),
+                  subtitle: const Text('Long-press, zoom, and backup hints'),
+                  value: settings.showHomeTips,
+                  onChanged: (value) => settings.setShowHomeTips(value),
+                ),
+              ),
+              const SizedBox(height: 18),
+              _SectionCard(
                 title: 'Backup',
                 subtitle: 'Export or import your local beer data.',
                 child: Column(
