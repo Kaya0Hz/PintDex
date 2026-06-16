@@ -26,13 +26,11 @@ class BeerTrackerApp extends StatelessWidget {
     super.key,
     required this.repository,
     AppSettings? settings,
-    this.initialLayout = BeerLayout.grid,
     this.initialSortMode = BeerSortMode.best,
   }) : settings = settings ?? AppSettings();
 
   final BeerRepository repository;
   final AppSettings settings;
-  final BeerLayout initialLayout;
   final BeerSortMode initialSortMode;
 
   @override
@@ -48,7 +46,6 @@ class BeerTrackerApp extends StatelessWidget {
           home: BeerHomePage(
             repository: repository,
             settings: settings,
-            initialLayout: initialLayout,
             initialSortMode: initialSortMode,
           ),
         );
@@ -56,8 +53,6 @@ class BeerTrackerApp extends StatelessWidget {
     );
   }
 }
-
-enum BeerLayout { list, grid }
 
 enum BeerSortMode { title, best, oldest }
 
@@ -89,13 +84,11 @@ class BeerHomePage extends StatefulWidget {
     super.key,
     required this.repository,
     required this.settings,
-    this.initialLayout = BeerLayout.grid,
     this.initialSortMode = BeerSortMode.best,
   });
 
   final BeerRepository repository;
   final AppSettings settings;
-  final BeerLayout initialLayout;
   final BeerSortMode initialSortMode;
 
   @override
@@ -103,7 +96,6 @@ class BeerHomePage extends StatefulWidget {
 }
 
 class _BeerHomePageState extends State<BeerHomePage> {
-  late BeerLayout _layout;
   late BeerSortMode _sortMode;
   late final TextEditingController _searchController;
   late Set<BeerType> _selectedTypes;
@@ -114,7 +106,6 @@ class _BeerHomePageState extends State<BeerHomePage> {
   @override
   void initState() {
     super.initState();
-    _layout = widget.initialLayout;
     _sortMode = widget.initialSortMode;
     _searchController = TextEditingController();
     _selectedTypes = <BeerType>{};
@@ -300,40 +291,15 @@ class _BeerHomePageState extends State<BeerHomePage> {
                         ),
                       ),
                     )
-                  else if (_layout == BeerLayout.grid)
-                    SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
-                      sliver: SliverGrid(
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 16,
-                          crossAxisSpacing: 16,
-                          childAspectRatio: isPhoneLayout ? 0.84 : 0.68,
-                        ),
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) => BeerCard(
-                            key: ValueKey(beers[index].id),
-                            beer: beers[index],
-                            compact: true,
-                            dense: isPhoneLayout,
-                            onTap: () => _openDetails(beers[index]),
-                            onDrink: () => _drinkBeer(beers[index]),
-                            onEdit: () => _openEditor(existing: beers[index]),
-                          ),
-                          childCount: beers.length,
-                        ),
-                      ),
-                    )
                   else
                     SliverPadding(
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
                       sliver: SliverList.separated(
                         itemCount: beers.length,
-                        separatorBuilder: (context, index) => const SizedBox(height: 14),
+                        separatorBuilder: (context, index) => const SizedBox(height: 12),
                         itemBuilder: (context, index) => BeerCard(
                           key: ValueKey(beers[index].id),
                           beer: beers[index],
-                          compact: false,
                           dense: isPhoneLayout,
                           onTap: () => _openDetails(beers[index]),
                           onDrink: () => _drinkBeer(beers[index]),
@@ -499,7 +465,6 @@ class _BeerHomePageState extends State<BeerHomePage> {
       showDragHandle: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
       builder: (context) => _HomeControlsSheet(
-        initialLayout: _layout,
         initialSortMode: _sortMode,
         initialSelectedTypes: _selectedTypes,
       ),
@@ -507,7 +472,6 @@ class _BeerHomePageState extends State<BeerHomePage> {
 
     if (result != null) {
       setState(() {
-        _layout = result.layout;
         _sortMode = result.sortMode;
         _selectedTypes = result.selectedTypes;
       });
@@ -516,10 +480,9 @@ class _BeerHomePageState extends State<BeerHomePage> {
 }
 
 class BeerCard extends StatefulWidget {
-  const BeerCard({super.key, required this.beer, required this.compact, required this.dense, required this.onTap, required this.onDrink, required this.onEdit});
+  const BeerCard({super.key, required this.beer, required this.dense, required this.onTap, required this.onDrink, required this.onEdit});
 
   final BeerEntry beer;
-  final bool compact;
   final bool dense;
   final VoidCallback onTap;
   final Future<void> Function() onDrink;
@@ -585,9 +548,7 @@ class _BeerCardState extends State<BeerCard> with SingleTickerProviderStateMixin
                   colors: [ratingColor.withValues(alpha: 0.48), scheme.surfaceContainerHighest.withValues(alpha: 0.92)],
                 ),
               ),
-              child: widget.compact
-                  ? _GridCardBody(beer: widget.beer, scheme: scheme, onEdit: widget.onEdit, context: context, dense: widget.dense)
-                  : _ListCardBody(beer: widget.beer, scheme: scheme, onEdit: widget.onEdit, context: context, dense: widget.dense),
+              child: _ListCardBody(beer: widget.beer, scheme: scheme, onEdit: widget.onEdit, context: context, dense: widget.dense),
               ),
             ),
           if (_drinking || _drinkController.isAnimating)
@@ -607,113 +568,6 @@ class _BeerCardState extends State<BeerCard> with SingleTickerProviderStateMixin
   }
 }
 
-class _GridCardBody extends StatelessWidget {
-  const _GridCardBody({required this.beer, required this.scheme, required this.onEdit, required this.context, required this.dense});
-
-  final BeerEntry beer;
-  final ColorScheme scheme;
-  final VoidCallback onEdit;
-  final BuildContext context;
-  final bool dense;
-
-  @override
-  Widget build(BuildContext _) {
-    final imageWidth = dense ? 88.0 : 104.0;
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SizedBox(
-          width: imageWidth,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              if (beer.imagePath.isNotEmpty)
-                Image.file(File(beer.imagePath), fit: BoxFit.cover)
-              else
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [scheme.primaryContainer, scheme.secondaryContainer],
-                    ),
-                  ),
-                  child: const Center(child: Icon(Icons.sports_bar_rounded, size: 34)),
-                ),
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Colors.transparent, Colors.black.withValues(alpha: 0.68)],
-                  ),
-                ),
-              ),
-              if (beer.favorite)
-                Positioned(
-                  left: 10,
-                  top: 10,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-                    decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.35), borderRadius: BorderRadius.circular(999)),
-                    child: const Icon(Icons.favorite_rounded, size: 12, color: Colors.white),
-                  ),
-                ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: Padding(
-            padding: EdgeInsets.all(dense ? 12 : 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  beer.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900, fontSize: dense ? 15 : 16),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  beer.type.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant, fontWeight: FontWeight.w700),
-                ),
-                SizedBox(height: dense ? 8 : 10),
-                _RatingSummary(
-                  overall: beer.overallRating,
-                  sweetness: beer.sweetnessRating,
-                  bitterness: beer.bitternessRating,
-                  body: beer.bodyRating,
-                  acidity: beer.acidityRating,
-                  dense: dense,
-                ),
-                const Spacer(),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        '${beer.createdAt.day}/${beer.createdAt.month}/${beer.createdAt.year}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-                      ),
-                    ),
-                    IconButton(onPressed: onEdit, icon: const Icon(Icons.edit_rounded), visualDensity: VisualDensity.compact),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _ListCardBody extends StatelessWidget {
   const _ListCardBody({required this.beer, required this.scheme, required this.onEdit, required this.context, required this.dense});
 
@@ -726,12 +580,12 @@ class _ListCardBody extends StatelessWidget {
   @override
   Widget build(BuildContext _) {
     return SizedBox(
-      height: dense ? 206 : 264,
+      height: dense ? 176 : 220,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SizedBox(
-            width: dense ? 108 : 132,
+            width: dense ? 84 : 110,
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -746,7 +600,7 @@ class _ListCardBody extends StatelessWidget {
                         colors: [scheme.primaryContainer, scheme.secondaryContainer],
                       ),
                     ),
-                    child: const Center(child: Icon(Icons.sports_bar_rounded, size: 40)),
+                    child: const Center(child: Icon(Icons.sports_bar_rounded, size: 36)),
                   ),
                 DecoratedBox(
                   decoration: BoxDecoration(
@@ -762,29 +616,35 @@ class _ListCardBody extends StatelessWidget {
           ),
           Expanded(
             child: Padding(
-              padding: EdgeInsets.all(dense ? 12 : 16),
+              padding: EdgeInsets.fromLTRB(dense ? 10 : 12, dense ? 8 : 10, dense ? 10 : 12, dense ? 6 : 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   if (beer.favorite)
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
                         decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.35), borderRadius: BorderRadius.circular(999)),
-                        child: const Icon(Icons.favorite_rounded, size: 14, color: Colors.white),
+                        child: const Icon(Icons.favorite_rounded, size: 12, color: Colors.white),
                       ),
                     ),
-                  if (beer.favorite) const SizedBox(height: 6),
+                  if (beer.favorite) const SizedBox(height: 4),
                   Text(
                     beer.title,
-                    maxLines: dense ? 1 : 2,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900, fontSize: dense ? 16 : null),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900, fontSize: dense ? 14.5 : 15.5),
                   ),
-                  SizedBox(height: dense ? 8 : 10),
-                  Text(beer.type.label, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant, fontWeight: FontWeight.w700)),
-                  SizedBox(height: dense ? 10 : 14),
+                  const SizedBox(height: 2),
+                  Text(
+                    beer.type.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(color: scheme.onSurfaceVariant, fontWeight: FontWeight.w700),
+                  ),
+                  SizedBox(height: dense ? 4 : 6),
                   _RatingSummary(
                     overall: beer.overallRating,
                     sweetness: beer.sweetnessRating,
@@ -793,6 +653,7 @@ class _ListCardBody extends StatelessWidget {
                     acidity: beer.acidityRating,
                     dense: dense,
                   ),
+                  SizedBox(height: dense ? 2 : 4),
                   Row(
                     children: [
                       Expanded(
@@ -1106,17 +967,15 @@ class _TipChip extends StatelessWidget {
 }
 
 class _HomeControlsResult {
-  const _HomeControlsResult({required this.layout, required this.sortMode, required this.selectedTypes});
+  const _HomeControlsResult({required this.sortMode, required this.selectedTypes});
 
-  final BeerLayout layout;
   final BeerSortMode sortMode;
   final Set<BeerType> selectedTypes;
 }
 
 class _HomeControlsSheet extends StatefulWidget {
-  const _HomeControlsSheet({required this.initialLayout, required this.initialSortMode, required this.initialSelectedTypes});
+  const _HomeControlsSheet({required this.initialSortMode, required this.initialSelectedTypes});
 
-  final BeerLayout initialLayout;
   final BeerSortMode initialSortMode;
   final Set<BeerType> initialSelectedTypes;
 
@@ -1125,14 +984,12 @@ class _HomeControlsSheet extends StatefulWidget {
 }
 
 class _HomeControlsSheetState extends State<_HomeControlsSheet> {
-  late BeerLayout _layout;
   late BeerSortMode _sortMode;
   late Set<BeerType> _selectedTypes;
 
   @override
   void initState() {
     super.initState();
-    _layout = widget.initialLayout;
     _sortMode = widget.initialSortMode;
     _selectedTypes = {...widget.initialSelectedTypes};
   }
@@ -1154,27 +1011,6 @@ class _HomeControlsSheetState extends State<_HomeControlsSheet> {
               const SizedBox(height: 8),
               Text('Choose how the list looks and which beers show up.', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant)),
               const SizedBox(height: 18),
-              Text('View', style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800)),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  _ModeChip<BeerLayout>(
-                    label: 'List view',
-                    value: BeerLayout.list,
-                    groupValue: _layout,
-                    onSelected: (value) => setState(() => _layout = value),
-                  ),
-                  _ModeChip<BeerLayout>(
-                    label: 'Box view',
-                    value: BeerLayout.grid,
-                    groupValue: _layout,
-                    onSelected: (value) => setState(() => _layout = value),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
               Text('Sort', style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800)),
               const SizedBox(height: 10),
               Wrap(
@@ -1202,10 +1038,12 @@ class _HomeControlsSheetState extends State<_HomeControlsSheet> {
                 ],
               ),
               const SizedBox(height: 16),
-              Row(
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Text('Types', style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800)),
-                  const Spacer(),
                   TextButton(
                     onPressed: () => setState(() => _selectedTypes = <BeerType>{}),
                     child: const Text('Any'),
@@ -1242,7 +1080,7 @@ class _HomeControlsSheetState extends State<_HomeControlsSheet> {
               const SizedBox(height: 18),
               FilledButton(
                 onPressed: () => Navigator.of(context).pop(
-                  _HomeControlsResult(layout: _layout, sortMode: _sortMode, selectedTypes: _selectedTypes),
+                  _HomeControlsResult(sortMode: _sortMode, selectedTypes: _selectedTypes),
                 ),
                 child: const Text('Apply'),
               ),
