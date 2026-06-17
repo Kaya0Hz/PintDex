@@ -176,7 +176,7 @@ class _BeerEditorSheetState extends State<BeerEditorSheet> {
                 ),
                 const SizedBox(height: 20),
                 DropdownButtonFormField<BeerType>(
-                  initialValue: _type,
+                  value: _type,
                   decoration: const InputDecoration(labelText: 'Beer type'),
                   items: BeerType.values
                       .where((type) => type != BeerType.all)
@@ -222,7 +222,7 @@ class _BeerEditorSheetState extends State<BeerEditorSheet> {
                   title: 'Purchase details',
                   children: [
                     DropdownButtonFormField<PurchaseLocationType>(
-                      initialValue: _purchaseLocationType,
+                      value: _purchaseLocationType,
                       decoration: const InputDecoration(labelText: 'Purchase type'),
                       items: PurchaseLocationType.values
                           .map((type) => DropdownMenuItem(value: type, child: Text(type.label)))
