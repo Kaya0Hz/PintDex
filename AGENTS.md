@@ -37,6 +37,10 @@ Two workflows in `.github/workflows/`, both trigger on `main` push, `v*` tags, a
 - **`android-apk.yml`** — debug APK (always), release APK + AAB (push only), GitHub Release on `v*` tags
 - **`docker-publish.yml`** — builds Linux desktop Docker image, pushes to `ghcr.io/<owner>/pintdex`
 
+## Changelog
+
+Update `CHANGELOG.md` when making user-facing changes (fixes, features, deprecations). Keep the format: `## [version] — date` with `Added`/`Fixed`/`Changed` sections.
+
 ## Gotchas
 
 - `DropdownButtonFormField` uses `value:`, not `initialValue:` (removed in Flutter 3.27)
@@ -46,3 +50,7 @@ Two workflows in `.github/workflows/`, both trigger on `main` push, `v*` tags, a
 - Release build uses **debug signing key** (`signingConfigs.debug`) — needs a real keystore before Play Store distribution
 - No network calls, no backend, no auth — everything stored as JSON + images in `getApplicationSupportDirectory()`
 - App uses `dart:io` — web target won't compile
+
+## Last session (Jun 16)
+
+Added Docker + Android CI (`v0.1.0`), then fixed SDK/lib constraints and two source-level Flutter 3.27 regressions (`v0.1.1`). Created `AGENTS.md` and `CHANGELOG.md`.
