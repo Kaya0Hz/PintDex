@@ -17,7 +17,8 @@ RUN curl -fsSL https://storage.googleapis.com/flutter_infra_release/releases/sta
 
 ENV PATH=/opt/flutter/bin:$PATH
 
-RUN flutter config --enable-linux-desktop
+RUN git config --global --add safe.directory /opt/flutter \
+  && flutter config --enable-linux-desktop --no-analytics
 
 WORKDIR /app
 COPY . .
