@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: ${{ github.event_name != 'pull_request' && 'write' || 'read' }}
+      packages: write
 
     steps:
       - uses: actions/checkout@f0282184c7ce73ab54c7e4ab5a617122602e575f
