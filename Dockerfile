@@ -35,7 +35,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libcairo2 \
     libgdk-pixbuf2.0-0 \
     libatk1.0-0 \
-    libasound2 \
+    libasound2t64 \
     liblzma5 \
     && rm -rf /var/lib/apt/lists/*
 
