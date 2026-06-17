@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2] — 2026-06-17
+
+### Fixed
+- Dockerfile: `libasound2` → `libasound2t64` (Ubuntu 24.04 transition)
+- Dockerfile: added `ca-certificates` for Flutter download TLS verification
+- Dockerfile: added `git safe.directory` and `--no-analytics` to fix Flutter version detection
+
 ## [0.1.1] — 2026-06-16
 
 ### Fixed

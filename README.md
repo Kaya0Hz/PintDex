@@ -16,30 +16,34 @@ Local-only beer tracking app for Linux and Android.
 
 ## How to run
 
+You can use PintDex without installing Flutter — just grab the prebuilt release.
+
+### Docker (Linux desktop)
+
+```bash
+docker pull ghcr.io/Kaya0Hz/pintdex:latest
+docker run --rm -it -v pintdex-data:/data ghcr.io/Kaya0Hz/pintdex:latest
+```
+
+### Android APK
+
+Download the latest APK from the [Releases](https://github.com/Kaya0Hz/PintDex/releases) page and install it on your device.
+
+### Local development
+
 From the project folder:
 
 ```bash
 flutter pub get
-flutter run -d linux
-```
-
-For Android:
-
-```bash
-flutter run -d android
-```
-
-## Build Linux
-
-```bash
-flutter build linux
+flutter run -d linux    # Linux desktop
+flutter run -d android  # Android device/emulator
 ```
 
 The Linux app stores beer data locally in your app support directory.
 
 ## Notes
 
-- You need Flutter installed and on your `PATH`
+- You need Flutter installed and on your `PATH` for local development
 - On Linux, you also need the desktop build toolchain
 - Android requires the Android SDK and a device or emulator
 
