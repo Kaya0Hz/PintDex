@@ -1,11 +1,27 @@
-FROM ghcr.io/cirruslabs/flutter:3.27.4 AS build
+FROM ubuntu:24.04@sha256:786a8b558f7be160c6c8c4a54f9a57274f3b4fb1491cf65146521ae77ff1dc54 AS build
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    git \
+    unzip \
+    xz-utils \
+    clang \
+    cmake \
+    ninja-build \
+    libgtk-3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.27.4-stable.tar.xz \
+    | tar xJ -C /opt
+
+ENV PATH=/opt/flutter/bin:$PATH
+
+RUN flutter config --enable-linux-desktop
 
 WORKDIR /app
 COPY . .
 
-RUN flutter config --enable-linux-desktop && \
-    flutter pub get && \
-    flutter build linux --release
+RUN flutter pub get && flutter build linux --release
 
 FROM ubuntu:24.04@sha256:786a8b558f7be160c6c8c4a54f9a57274f3b4fb1491cf65146521ae77ff1dc54 AS runtime
 
