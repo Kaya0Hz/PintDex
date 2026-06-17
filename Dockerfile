@@ -50,6 +50,6 @@ VOLUME /data
 USER pintdex
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD ["/app/pintdex", "--help"]
+  CMD ["test", "-f", "/app/pintdex"]
 
 ENTRYPOINT ["/app/pintdex"]
