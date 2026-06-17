@@ -42,3 +42,16 @@ The Linux app stores beer data locally in your app support directory.
 - You need Flutter installed and on your `PATH`
 - On Linux, you also need the desktop build toolchain
 - Android requires the Android SDK and a device or emulator
+
+## Release process
+
+Tag a commit and push it to trigger the CI pipelines:
+
+```bash
+git tag -a v1.0.0 -m "v1.0.0"
+git push origin v1.0.0
+```
+
+This will:
+1. **Docker** — Build and publish a Linux desktop image to `ghcr.io/<owner>/pintdex`
+2. **Android** — Build release APK + AAB, upload them as artifacts, and create a **GitHub Release** with the binaries attached
