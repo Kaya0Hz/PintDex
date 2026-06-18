@@ -15,8 +15,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     libgtk-3-dev \
     && rm -rf /var/lib/apt/lists/*
 
-RUN --mount=type=cache,target=/opt/flutter \
-    curl -fsSL https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.27.4-stable.tar.xz \
+RUN curl -fsSL https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.27.4-stable.tar.xz \
     | tar xJ -C /opt
 
 ENV PATH=/opt/flutter/bin:$PATH
